@@ -1,5 +1,7 @@
 package com.youtube.tutorial.ecommercebackend.api.controller.auth;
 
+import com.youtube.tutorial.ecommercebackend.api.model.LoginBody;
+import com.youtube.tutorial.ecommercebackend.api.model.LoginResponse;
 import com.youtube.tutorial.ecommercebackend.api.model.RegistrationBody;
 import com.youtube.tutorial.ecommercebackend.exception.UserAlreadyExistsException;
 import com.youtube.tutorial.ecommercebackend.service.UserService;
@@ -41,6 +43,23 @@ public class AuthenticationController {
       return ResponseEntity.ok().build();
     } catch (UserAlreadyExistsException ex) {
       return ResponseEntity.status(HttpStatus.CONFLICT).build();
+    }
+  }
+
+  /**
+   * Post Mapping to handle user logins to provide authentication token.
+   * @param loginBody The login information.
+   * @return The authentication token if successful.
+   */
+  @PostMapping("/login")
+  public ResponseEntity<LoginResponse> loginUser(@Valid @RequestBody LoginBody loginBody) {
+    String jwt = userService.loginUser(loginBody);
+    if (jwt == null) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+    } else {
+      LoginResponse response = new LoginResponse();
+      response.setJwt(jwt);
+      return ResponseEntity.ok(response);
     }
   }
 
