@@ -1,5 +1,6 @@
 package com.youtube.tutorial.ecommercebackend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -29,6 +30,7 @@ public class WebOrderQuantities {
   @Column(name = "quantity", nullable = false)
   private Integer quantity;
   /** The order itself. */
+  @JsonIgnore
   @ManyToOne(optional = false)
   @JoinColumn(name = "order_id", nullable = false)
   private WebOrder order;
