@@ -1,5 +1,6 @@
 package com.youtube.tutorial.ecommercebackend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -28,6 +29,7 @@ public class LocalUser {
   @Column(name = "username", nullable = false, unique = true)
   private String username;
   /** The encrypted password of the user. */
+  @JsonIgnore
   @Column(name = "password", nullable = false, length = 1000)
   private String password;
   /** The email of the user. */
@@ -40,6 +42,7 @@ public class LocalUser {
   @Column(name = "last_name", nullable = false)
   private String lastName;
   /** The addresses associated with the user. */
+  @JsonIgnore
   @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
   private List<Address> addresses = new ArrayList<>();
 

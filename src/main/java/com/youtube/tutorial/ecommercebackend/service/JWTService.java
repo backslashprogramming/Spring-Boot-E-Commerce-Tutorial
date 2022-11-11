@@ -50,4 +50,13 @@ public class JWTService {
         .sign(algorithm);
   }
 
+  /**
+   * Gets the username out of a given JWT.
+   * @param token The JWT to decode.
+   * @return The username stored inside.
+   */
+  public String getUsername(String token) {
+    return JWT.decode(token).getClaim(USERNAME_KEY).asString();
+  }
+
 }
