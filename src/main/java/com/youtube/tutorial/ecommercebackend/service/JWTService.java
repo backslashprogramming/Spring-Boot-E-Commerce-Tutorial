@@ -28,6 +28,7 @@ public class JWTService {
   private Algorithm algorithm;
   /** The JWT claim key for the username. */
   private static final String USERNAME_KEY = "USERNAME";
+  private static final String EMAIL_KEY = "EMAIL";
 
   /**
    * Post construction method.
@@ -45,6 +46,19 @@ public class JWTService {
   public String generateJWT(LocalUser user) {
     return JWT.create()
         .withClaim(USERNAME_KEY, user.getUsername())
+        .withExpiresAt(new Date(System.currentTimeMillis() + (1000 * expiryInSeconds)))
+        .withIssuer(issuer)
+        .sign(algorithm);
+  }
+
+  /**
+   * Generates a special token for verification of an email.
+   * @param user The user to create the token for.
+   * @return The token generated.
+   */
+  public String generateVerificationJWT(LocalUser user) {
+    return JWT.create()
+        .withClaim(EMAIL_KEY, user.getEmail())
         .withExpiresAt(new Date(System.currentTimeMillis() + (1000 * expiryInSeconds)))
         .withIssuer(issuer)
         .sign(algorithm);

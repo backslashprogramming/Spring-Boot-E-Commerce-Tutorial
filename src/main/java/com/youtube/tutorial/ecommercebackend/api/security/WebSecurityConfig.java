@@ -31,7 +31,7 @@ public class WebSecurityConfig {
     http.addFilterBefore(jwtRequestFilter, AuthorizationFilter.class);
     http.authorizeHttpRequests()
         // Specific exclusions or rules.
-        .requestMatchers("/product", "/auth/register", "/auth/login").permitAll()
+        .requestMatchers("/product", "/auth/register", "/auth/login", "/auth/verify").permitAll()
         // Everything else should be authenticated.
         .anyRequest().authenticated();
     return http.build();
