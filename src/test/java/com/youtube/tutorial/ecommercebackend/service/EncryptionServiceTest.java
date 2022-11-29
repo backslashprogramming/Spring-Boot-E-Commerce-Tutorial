@@ -3,12 +3,14 @@ package com.youtube.tutorial.ecommercebackend.service;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 
 /**
  * Class to test the Encryption Service.
  */
 @SpringBootTest
+@AutoConfigureMockMvc
 public class EncryptionServiceTest {
 
   /** The EncryptionService to test. */

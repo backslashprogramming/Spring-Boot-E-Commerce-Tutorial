@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.List;
@@ -25,6 +26,7 @@ import java.util.List;
  * Test class to unit test the UserService class.
  */
 @SpringBootTest
+@AutoConfigureMockMvc
 public class UserServiceTest {
 
   /** Extension for mocking email sending. */
