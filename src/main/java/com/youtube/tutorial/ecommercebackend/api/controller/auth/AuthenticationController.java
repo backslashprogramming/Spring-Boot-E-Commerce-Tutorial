@@ -2,13 +2,17 @@ package com.youtube.tutorial.ecommercebackend.api.controller.auth;
 
 import com.youtube.tutorial.ecommercebackend.api.model.LoginBody;
 import com.youtube.tutorial.ecommercebackend.api.model.LoginResponse;
+import com.youtube.tutorial.ecommercebackend.api.model.PasswordResetBody;
 import com.youtube.tutorial.ecommercebackend.api.model.RegistrationBody;
 import com.youtube.tutorial.ecommercebackend.exception.EmailFailureException;
+import com.youtube.tutorial.ecommercebackend.exception.EmailNotFoundException;
 import com.youtube.tutorial.ecommercebackend.exception.UserAlreadyExistsException;
 import com.youtube.tutorial.ecommercebackend.exception.UserNotVerifiedException;
 import com.youtube.tutorial.ecommercebackend.model.LocalUser;
 import com.youtube.tutorial.ecommercebackend.service.UserService;
 import jakarta.validation.Valid;
+import org.apache.coyote.Response;
+import org.springframework.boot.actuate.autoconfigure.observation.ObservationProperties;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -109,6 +113,34 @@ public class AuthenticationController {
   @GetMapping("/me")
   public LocalUser getLoggedInUserProfile(@AuthenticationPrincipal LocalUser user) {
     return user;
+  }
+
+  /**
+   * Sends an email to the user with a link to reset their password.
+   * @param email The email to reset.
+   * @return Ok if sent, bad request if email not found.
+   */
+  @PostMapping("/forgot")
+  public ResponseEntity forgotPassword(@RequestParam String email) {
+    try {
+      userService.forgotPassword(email);
+      return ResponseEntity.ok().build();
+    } catch (EmailNotFoundException ex) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+    } catch (EmailFailureException e) {
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+    }
+  }
+
+  /**
+   * Resets the users password with the given token and password.
+   * @param body The information for the password reset.
+   * @return Okay if password was set.
+   */
+  @PostMapping("/reset")
+  public ResponseEntity resetPassword(@Valid @RequestBody PasswordResetBody body) {
+    userService.resetPassword(body);
+    return ResponseEntity.ok().build();
   }
 
 }

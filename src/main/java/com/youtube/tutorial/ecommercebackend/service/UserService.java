@@ -1,8 +1,10 @@
 package com.youtube.tutorial.ecommercebackend.service;
 
 import com.youtube.tutorial.ecommercebackend.api.model.LoginBody;
+import com.youtube.tutorial.ecommercebackend.api.model.PasswordResetBody;
 import com.youtube.tutorial.ecommercebackend.api.model.RegistrationBody;
 import com.youtube.tutorial.ecommercebackend.exception.EmailFailureException;
+import com.youtube.tutorial.ecommercebackend.exception.EmailNotFoundException;
 import com.youtube.tutorial.ecommercebackend.exception.UserAlreadyExistsException;
 import com.youtube.tutorial.ecommercebackend.exception.UserNotVerifiedException;
 import com.youtube.tutorial.ecommercebackend.model.LocalUser;
@@ -134,6 +136,37 @@ public class UserService {
       }
     }
     return false;
+  }
+
+  /**
+   * Sends the user a forgot password reset based on the email provided.
+   * @param email The email to send to.
+   * @throws EmailNotFoundException Thrown if there is no user with that email.
+   * @throws EmailFailureException
+   */
+  public void forgotPassword(String email) throws EmailNotFoundException, EmailFailureException {
+    Optional<LocalUser> opUser = localUserDAO.findByEmailIgnoreCase(email);
+    if (opUser.isPresent()) {
+      LocalUser user = opUser.get();
+      String token = jwtService.generatePasswordResetJWT(user);
+      emailService.sendPasswordResetEmail(user, token);
+    } else {
+      throw new EmailNotFoundException();
+    }
+  }
+
+  /**
+   * Resets the users password using a given token and email.
+   * @param body The password reset information.
+   */
+  public void resetPassword(PasswordResetBody body) {
+    String email = jwtService.getResetPasswordEmail(body.getToken());
+    Optional<LocalUser> opUser = localUserDAO.findByEmailIgnoreCase(email);
+    if (opUser.isPresent()) {
+      LocalUser user = opUser.get();
+      user.setPassword(encryptionService.encryptPassword(body.getPassword()));
+      localUserDAO.save(user);
+    }
   }
 
 }

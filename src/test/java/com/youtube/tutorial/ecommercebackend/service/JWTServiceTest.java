@@ -26,6 +26,7 @@ public class JWTServiceTest {
    /** The Local User DAO. */
   @Autowired
   private LocalUserDAO localUserDAO;
+  /** The algorithm key we're using in the properties file. */
   @Value("${jwt.algorithm.key}")
   private String algorithmKey;
 
@@ -54,7 +55,7 @@ public class JWTServiceTest {
    * ours the verification rejects the token as the signature is not verified.
    */
   @Test
-  public void testJWTNotGeneratedByUs() {
+  public void testLoginJWTNotGeneratedByUs() {
     String token =
         JWT.create().withClaim("USERNAME", "UserA").sign(Algorithm.HMAC256(
         "NotTheRealSecret"));
@@ -67,12 +68,50 @@ public class JWTServiceTest {
    * the issuer we reject it.
    */
   @Test
-  public void testJWTCorrectlySignedNoIssuer() {
+  public void testLoginJWTCorrectlySignedNoIssuer() {
     String token =
         JWT.create().withClaim("USERNAME", "UserA")
             .sign(Algorithm.HMAC256(algorithmKey));
     Assertions.assertThrows(MissingClaimException.class,
         () -> jwtService.getUsername(token));
+  }
+
+  /**
+   * Tests that when someone generates a JWT with an algorithm different to
+   * ours the verification rejects the token as the signature is not verified.
+   */
+  @Test
+  public void testResetPasswordJWTNotGeneratedByUs() {
+    String token =
+        JWT.create().withClaim("RESET_PASSWORD_EMAIL", "UserA@junit.com").sign(Algorithm.HMAC256(
+            "NotTheRealSecret"));
+    Assertions.assertThrows(SignatureVerificationException.class,
+        () -> jwtService.getResetPasswordEmail(token));
+  }
+
+  /**
+   * Tests that when a JWT token is generated if it does not contain us as
+   * the issuer we reject it.
+   */
+  @Test
+  public void testResetPasswordJWTCorrectlySignedNoIssuer() {
+    String token =
+        JWT.create().withClaim("RESET_PASSWORD_EMAIL", "UserA@junit.com")
+            .sign(Algorithm.HMAC256(algorithmKey));
+    Assertions.assertThrows(MissingClaimException.class,
+        () -> jwtService.getResetPasswordEmail(token));
+  }
+
+  /**
+   * Tests the password reset generation and verification.
+   */
+  @Test
+  public void testPasswordResetToken() {
+    LocalUser user = localUserDAO.findByUsernameIgnoreCase("UserA").get();
+    String token = jwtService.generatePasswordResetJWT(user);
+    Assertions.assertEquals(user.getEmail(),
+        jwtService.getResetPasswordEmail(token), "Email should match inside " +
+            "JWT.");
   }
 
 }
