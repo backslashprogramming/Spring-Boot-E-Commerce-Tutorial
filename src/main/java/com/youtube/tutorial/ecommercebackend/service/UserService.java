@@ -169,4 +169,14 @@ public class UserService {
     }
   }
 
+  /**
+   * Method to check if an authenticated user has permission to a user ID.
+   * @param user The authenticated user.
+   * @param id The user ID.
+   * @return True if they have permission, false otherwise.
+   */
+  public boolean userHasPermissionToUser(LocalUser user, Long id) {
+    return user.getId() == id;
+  }
+
 }

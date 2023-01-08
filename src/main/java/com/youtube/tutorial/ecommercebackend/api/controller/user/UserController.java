@@ -1,10 +1,13 @@
 package com.youtube.tutorial.ecommercebackend.api.controller.user;
 
+import com.youtube.tutorial.ecommercebackend.api.model.DataChange;
 import com.youtube.tutorial.ecommercebackend.model.Address;
 import com.youtube.tutorial.ecommercebackend.model.LocalUser;
 import com.youtube.tutorial.ecommercebackend.model.dao.AddressDAO;
+import com.youtube.tutorial.ecommercebackend.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -26,13 +29,21 @@ public class UserController {
 
   /** The Address DAO. */
   private AddressDAO addressDAO;
+  private SimpMessagingTemplate simpMessagingTemplate;
+  private UserService userService;
 
   /**
    * Constructor for spring injection.
    * @param addressDAO
+   * @param simpMessagingTemplate
+   * @param userService
    */
-  public UserController(AddressDAO addressDAO) {
+  public UserController(AddressDAO addressDAO,
+                        SimpMessagingTemplate simpMessagingTemplate,
+                        UserService userService) {
     this.addressDAO = addressDAO;
+    this.simpMessagingTemplate = simpMessagingTemplate;
+    this.userService = userService;
   }
 
   /**
@@ -44,7 +55,7 @@ public class UserController {
   @GetMapping("/{userId}/address")
   public ResponseEntity<List<Address>> getAddress(
       @AuthenticationPrincipal LocalUser user, @PathVariable Long userId) {
-    if (!userHasPermission(user, userId)) {
+    if (!userService.userHasPermissionToUser(user, userId)) {
       return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
     }
     return ResponseEntity.ok(addressDAO.findByUser_Id(userId));
@@ -61,14 +72,17 @@ public class UserController {
   public ResponseEntity<Address> putAddress(
       @AuthenticationPrincipal LocalUser user, @PathVariable Long userId,
       @RequestBody Address address) {
-    if (!userHasPermission(user, userId)) {
+    if (!userService.userHasPermissionToUser(user, userId)) {
       return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
     }
     address.setId(null);
     LocalUser refUser = new LocalUser();
     refUser.setId(userId);
     address.setUser(refUser);
-    return ResponseEntity.ok(addressDAO.save(address));
+    Address savedAddress = addressDAO.save(address);
+    simpMessagingTemplate.convertAndSend("/topic/user/" + userId + "/address",
+        new DataChange<>(DataChange.ChangeType.INSERT, address));
+    return ResponseEntity.ok(savedAddress);
   }
 
   /**
@@ -83,7 +97,7 @@ public class UserController {
   public ResponseEntity<Address> patchAddress(
       @AuthenticationPrincipal LocalUser user, @PathVariable Long userId,
       @PathVariable Long addressId, @RequestBody Address address) {
-    if (!userHasPermission(user, userId)) {
+    if (!userService.userHasPermissionToUser(user, userId)) {
       return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
     }
     if (address.getId() == addressId) {
@@ -92,21 +106,14 @@ public class UserController {
         LocalUser originalUser = opOriginalAddress.get().getUser();
         if (originalUser.getId() == userId) {
           address.setUser(originalUser);
-          return ResponseEntity.ok(addressDAO.save(address));
+          Address savedAddress = addressDAO.save(address);
+          simpMessagingTemplate.convertAndSend("/topic/user/" + userId + "/address",
+              new DataChange<>(DataChange.ChangeType.UPDATE, address));
+          return ResponseEntity.ok(savedAddress);
         }
       }
     }
     return ResponseEntity.badRequest().build();
-  }
-
-  /**
-   * Method to check if an authenticated user has permission to a user ID.
-   * @param user The authenticated user.
-   * @param id The user ID.
-   * @return True if they have permission, false otherwise.
-   */
-  private boolean userHasPermission(LocalUser user, Long id) {
-    return user.getId() == id;
   }
 
 }
